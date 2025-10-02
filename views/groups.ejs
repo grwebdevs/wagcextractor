@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Your Groups — WhatsApp Extractor</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <div class="container">
+    <h1>Your Groups</h1>
+
+    <div class="controls-row">
+      <div>
+        <button class="btn primary" type="button" onclick="selectAll(true)">Select All</button>
+        <button class="btn alt" type="button" onclick="selectAll(false)">Deselect All</button>
+      </div>
+
+      <div>
+        <input id="groupSearch" type="search" placeholder="Search groups..." oninput="filterGroups()" />
+      </div>
+    </div>
+
+    <form id="groupsForm" method="POST" action="/extract">
+      <div id="groupsList" class="group-list">
+        <% if (groups && groups.length > 0) { %>
+          <% groups.forEach(g => { %>
+            <label class="group-item">
+              <input type="checkbox" name="selectedGroups" value="<%= g.id %>">
+              <span class="gname"><%= g.name %></span>
+            </label>
+          <% }) %>
+        <% } else { %>
+          <p>No groups found. Try refreshing after scanning the QR code.</p>
+        <% } %>
+      </div>
+
+      <div style="margin-top:14px;">
+        <button class="btn primary" type="submit">Fetch Selected Groups</button>
+        <a href="/" class="btn alt">Back (QR)</a>
+        <a href="/refresh-groups" class="btn" style="background:#f6ad55;color:#111;">Refresh Groups</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="/main.js"></script>
+  <script>
+    function selectAll(state) {
+      document.querySelectorAll("input[name='selectedGroups']").forEach(cb => cb.checked = state);
+    }
+    function filterGroups() {
+      const q = (document.getElementById('groupSearch').value || '').toLowerCase();
+      document.querySelectorAll('.group-item').forEach(el => {
+        const name = (el.querySelector('.gname')?.textContent || '').toLowerCase();
+        el.style.display = name.includes(q) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Members — WhatsApp Extractor</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <div class="container">
+    <h1>Extracted Members</h1>
+
+    <div class="summary-row">
+      <div>Total entries: <strong><%= combined.all.length %></strong></div>
+      <div>Phone numbers: <strong><%= combined.numbers.length %></strong></div>
+      <div>Hidden IDs: <strong><%= combined.hidden.length %></strong></div>
+    </div>
+
+    <div class="actions-row">
+      <div>
+        <button id="copyAll" class="btn">📋 Copy All</button>
+        <button id="copyNumbers" class="btn">📱 Copy Numbers</button>
+        <button id="copyHidden" class="btn">🙈 Copy Hidden</button>
+      </div>
+
+      <div>
+        <input id="filterInput" type="search" placeholder="Filter by name or number" oninput="filterRows()" />
+        <select id="exportFormat">
+          <option value="csv">CSV</option>
+          <option value="xlsx">Excel (XLSX)</option>
+          <option value="json">JSON</option>
+        </select>
+        <button id="doExport" class="btn primary">Export</button>
+      </div>
+    </div>
+
+    <hr />
+
+    <% perGroupResults.forEach(g => { %>
+      <section class="group-block">
+        <h2><%= g.groupName %></h2>
+        <p>Members: <strong><%= (g.numbers.length + g.hiddenIds.length) %></strong></p>
+
+        <div class="two-col">
+          <div>
+            <h3>Phone Numbers</h3>
+            <% if (g.numbers.length > 0) { %>
+              <table class="result-table">
+                <thead><tr><th>Name</th><th>Number</th></tr></thead>
+                <tbody>
+                  <% g.numbers.forEach(n => { %>
+                    <tr class="data-row">
+                      <td class="col-name"><%= n.name %></td>
+                      <td class="col-number"><%= n.number %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            <% } else { %>
+              <p>None</p>
+            <% } %>
+          </div>
+
+          <div>
+            <h3>Hidden IDs (@lid)</h3>
+            <% if (g.hiddenIds.length > 0) { %>
+              <table class="result-table">
+                <thead><tr><th>Name</th><th>ID</th></tr></thead>
+                <tbody>
+                  <% g.hiddenIds.forEach(h => { %>
+                    <tr class="data-row">
+                      <td class="col-name"><%= h.name %></td>
+                      <td class="col-number"><%= h.id %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            <% } else { %>
+              <p>None</p>
+            <% } %>
+          </div>
+        </div>
+      </section>
+    <% }) %>
+
+    <div style="margin-top:18px;">
+      <a href="/groups" class="btn alt">⬅ Back to Groups</a>
+    </div>
+  </div>
+
+  <script>
+    // combined array from server: { groupId, groupName, name, number?, id?, type }
+    const combined = <%- JSON.stringify(combined.all) %>;
+
+    function copyText(text, msg) {
+      navigator.clipboard.writeText(text).then(() => alert(msg || "Copied"));
+    }
+
+    document.getElementById('copyAll').addEventListener('click', () => {
+      const txt = combined.map(x => (x.name ? x.name + " - " : "") + (x.number || x.id)).join("\\n");
+      copyText(txt, 'Copied all entries');
+    });
+
+    document.getElementById('copyNumbers').addEventListener('click', () => {
+      const txt = combined.filter(x => x.type === 'number').map(x => (x.name ? x.name + " - " : "") + x.number).join("\\n");
+      copyText(txt, 'Copied phone numbers');
+    });
+
+    document.getElementById('copyHidden').addEventListener('click', () => {
+      const txt = combined.filter(x => x.type === 'hidden').map(x => (x.name ? x.name + " - " : "") + x.id).join("\\n");
+      copyText(txt, 'Copied hidden IDs');
+    });
+
+    // client-side filtering
+    function filterRows() {
+      const q = (document.getElementById('filterInput').value || '').toLowerCase();
+      document.querySelectorAll('.data-row').forEach(row => {
+        const name = (row.querySelector('.col-name')?.textContent || '').toLowerCase();
+        const num = (row.querySelector('.col-number')?.textContent || '').toLowerCase();
+        row.style.display = (name.includes(q) || num.includes(q)) ? '' : 'none';
+      });
+    }
+
+    // export
+    document.getElementById('doExport').addEventListener('click', async () => {
+      const format = document.getElementById('exportFormat').value;
+      try {
+        const resp = await fetch('/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format, payload: JSON.stringify(combined) })
+        });
+        if (!resp.ok) {
+          const txt = await resp.text();
+          alert('Export failed: ' + txt);
+          return;
+        }
+        const blob = await resp.blob();
+        const disposition = resp.headers.get('content-disposition') || '';
+        let filename = 'whatsapp-export.' + format;
+        const match = /filename="?(.+)"?/.exec(disposition);
+        if (match && match[1]) filename = match[1];
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error(err);
+        alert('Export failed: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "wagcextract",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.2",
+    "json2csv": "^6.0.0-alpha.2",
+    "qrcode": "^1.5.4",
+    "whatsapp-web.js": "^1.34.1",
+    "xlsx": "^0.18.5"
+  }
+}

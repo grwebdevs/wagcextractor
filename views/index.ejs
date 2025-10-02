@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WhatsApp Extractor — Login</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <div class="container">
+    <h1>WhatsApp Group Extractor</h1>
+    <p>Scan the QR code with your WhatsApp mobile app to authenticate this session.</p>
+
+    <div class="qr-box">
+      <% if (qr) { %>
+        <img src="<%= qr %>" alt="QR Code" />
+      <% } else { %>
+        <div class="qr-wait">
+          <div class="spinner"></div>
+          <p>Waiting for QR code... check terminal if nothing appears.</p>
+        </div>
+      <% } %>
+    </div>
+
+    <div style="margin-top:16px;">
+      <a href="/refresh-groups" class="btn primary">Refresh & Go to Groups</a>
+      <a href="/debug-chats" class="btn alt" target="_blank">Debug Chats (JSON)</a>
+    </div>
+
+    <p style="margin-top:18px;color:#666;font-size:13px;">
+      Note: session is saved under <code>./session</code>. Delete it to force fresh login.
+    </p>
+  </div>
+</body>
+</html>
